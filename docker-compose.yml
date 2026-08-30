@@ -70,6 +70,7 @@ services:
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-GlobalExchangeRealm}
       - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-django-app}
       - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET:-tu-secret-local}
+      - OIDC_RP_SIGN_ALGO=${OIDC_RP_SIGN_ALGO:-RS256}
       - EMAIL_HOST=mailpit
       - EMAIL_PORT=1025
     depends_on:
