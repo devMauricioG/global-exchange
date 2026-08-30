@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'mozilla_django_oidc',
     # Aplicaciones propias
     'authentication',
+    'customers',
 ]
 
 MIDDLEWARE = [
