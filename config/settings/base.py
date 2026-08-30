@@ -24,7 +24,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Tus aplicaciones personalizadas van aquí abajo...
+    # Aplicaciones de terceros
+    'mozilla_django_oidc',
+    # Aplicaciones propias
+    'authentication',
     'customers',
 ]
 
@@ -36,6 +39,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'mozilla_django_oidc.middleware.SessionRefresh',
 ]
 
 TEMPLATES = [
@@ -69,3 +73,14 @@ STATICFILES_DIRS = [
 
 # Tipo de clave primaria por defecto
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Backends de autenticación (OIDC + Django local para admin)
+AUTHENTICATION_BACKENDS = [
+    'authentication.backends.KeycloakOIDCAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# URLs de redirección para autenticación
+LOGIN_URL = '/oidc/authenticate/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
