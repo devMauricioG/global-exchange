@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Tus aplicaciones personalizadas van aquí abajo...
+    'customers',
 ]
 
 MIDDLEWARE = [
