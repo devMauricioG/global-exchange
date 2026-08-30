@@ -108,7 +108,8 @@ Si prefieres ejecutar Django directamente en tu máquina host:
 | :--- | :--- | :--- | :--- |
 | **Django API / Admin** | [http://localhost:8000](http://localhost:8000) / [http://localhost:8000/admin](http://localhost:8000/admin) | *(El superusuario que crees)* | Backend principal |
 | **Keycloak Admin** | [http://localhost:8080](http://localhost:8080) | `admin` / `admin` | Servidor de identidad y acceso (IAM) |
-| **PostgreSQL** | `localhost:5432` | `postgres` / `postgres` (BD: `global_exchange_db`) | Base de datos relacional |
+| **Mailpit (SMTP Dev)** | [http://localhost:8025](http://localhost:8025) (Web) / `1025` (SMTP) | *(Sin autenticación)* | Servidor de correos simulados en desarrollo |
+| **PostgreSQL** | `localhost:5432` | `postgres` / `postgres` (BDs: `global_exchange_db`, `keycloak_db`) | Base de datos relacional |
 
 ---
 

@@ -5,27 +5,50 @@ services:
       POSTGRES_DB: ${DB_NAME:-global_exchange_db}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      KEYCLOAK_DB_NAME: ${KEYCLOAK_DB_NAME:-keycloak_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-global_exchange_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025" # Servidor SMTP
+      - "8025:8025" # Interfaz Web
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
   keycloak:
     image: quay.io/keycloak/keycloak:22.0
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: ${KEYCLOAK_DB_NAME:-keycloak_db}
+      KC_DB_USERNAME: ${DB_USER:-postgres}
+      KC_DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    volumes:
+      - ./keycloak/imports:/opt/keycloak/data/import
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   web:
     build: .
@@ -44,9 +67,18 @@ services:
       - DEBUG=${DEBUG:-True}
       - DJANGO_SETTINGS_MODULE=config.settings.dev
       - KEYCLOAK_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM:-GlobalExchangeRealm}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-django-app}
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET:-tu-secret-local}
+      - EMAIL_HOST=mailpit
+      - EMAIL_PORT=1025
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
+      mailpit:
+        condition: service_started
 
 volumes:
   postgres_data:
