@@ -4,3 +4,7 @@ sqlparse==0.6.0
 tzdata==2026.3
 python-dotenv==1.2.3
 psycopg[binary]==3.3.4
+mozilla-django-oidc==4.0.1
+PyJWT==2.10.1
+cryptography==44.0.3
+requests==2.32.3
