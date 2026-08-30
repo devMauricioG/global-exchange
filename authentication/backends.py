@@ -73,7 +73,11 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         user.username = claims.get("preferred_username", user.username)
 
         # Mapear roles de Keycloak a permisos de Django
-        realm_roles = claims.get("realm_roles", [])
+        # Soporta tanto el claim personalizado 'realm_roles' como el formato estándar 'realm_access.roles'
+        realm_roles = (
+            claims.get("realm_roles")
+            or claims.get("realm_access", {}).get("roles", [])
+        )
         self._map_roles_to_permissions(user, realm_roles)
 
         user.save()
