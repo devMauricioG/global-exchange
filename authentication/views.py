@@ -50,6 +50,7 @@ def home_view(request):
                 <div class="info-row"><span class="info-label">Es Superusuario:</span><span class="info-value">{'Sí' if request.user.is_superuser else 'No'}</span></div>
                 <div class="info-row"><span class="info-label">Grupos asignados:</span><span class="info-value">{groups}</span></div>
                 <div class="actions">
+                    <a href="/customers/" class="btn btn-primary" style="background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%); color: white;">Gestión Clientes</a>
                     {'<a href="/admin/" class="btn btn-admin">Panel Admin</a>' if request.user.is_staff else ''}
                     <a href="/auth/logout/" class="btn btn-logout">Cerrar Sesión SSO</a>
                 </div>

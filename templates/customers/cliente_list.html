@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Clientes - Global Exchange{% endblock %}
+
+{% block extra_head %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-title-group h1 {
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: #f8fafc;
+        letter-spacing: -0.025em;
+    }
+
+    .page-title-group p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-label {
+        font-size: 0.825rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-top: 0.25rem;
+    }
+
+    /* Filter Toolbar */
+    .filter-bar {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    @media (max-width: 900px) {
+        .filter-form {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .filter-form {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Table Styles */
+    .table-container {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.925rem;
+    }
+
+    .table th {
+        background-color: #0f172a;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .table td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        vertical-align: middle;
+    }
+
+    .table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table tr:hover {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .client-name {
+        font-weight: 600;
+        color: var(--text-main);
+        display: block;
+    }
+
+    .client-email {
+        font-size: 0.825rem;
+        color: var(--text-muted);
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .btn-icon {
+        padding: 0.4rem 0.65rem;
+        font-size: 0.8rem;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        color: var(--text-muted);
+        background: #0f172a;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+        color: var(--text-main);
+        border-color: var(--primary);
+    }
+
+    .btn-icon-danger:hover {
+        color: #f87171;
+        border-color: var(--danger);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--border-color);
+        background-color: #0f172a;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>Directorio de Clientes</h1>
+        <p>Administra la cartera de clientes, segmentaciones y datos de contacto.</p>
+    </div>
+    <div>
+        <a href="{% url 'customers:cliente-create' %}" class="btn btn-primary">
+            + Nuevo Cliente
+        </a>
+    </div>
+</div>
+
+<!-- Stats Overview -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Total Clientes</span>
+        <span class="stat-value">{{ total_count }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Activos</span>
+        <span class="stat-value" style="color: #34d399;">{{ active_count }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Resultados Filtrados</span>
+        <span class="stat-value" style="color: #38bdf8;">{{ page_obj.paginator.count|default:clientes|length }}</span>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="filter-bar">
+    <form method="get" class="filter-form">
+        <div>
+            <label class="form-label" for="id_q">Búsqueda General</label>
+            {{ filter_form.q }}
+        </div>
+        <div>
+            <label class="form-label" for="id_segmentacion">Segmentación</label>
+            {{ filter_form.segmentacion }}
+        </div>
+        <div>
+            <label class="form-label" for="id_documento_ruc">Doc. / RUC</label>
+            {{ filter_form.documento_ruc }}
+        </div>
+        <div>
+            <label class="form-label" for="id_is_active">Estado</label>
+            {{ filter_form.is_active }}
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{% url 'customers:cliente-list' %}" class="btn btn-secondary" title="Limpiar filtros">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Table / List of Clientes -->
+<div class="table-container">
+    {% if clientes %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Cliente / Correo</th>
+                    <th>Documento / RUC</th>
+                    <th>Teléfono</th>
+                    <th>Segmento</th>
+                    <th>Estado</th>
+                    <th style="text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in clientes %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'customers:cliente-detail' cliente.pk %}" class="client-name" style="text-decoration: none;">
+                                {{ cliente.nombre }}
+                            </a>
+                            <span class="client-email">{{ cliente.correo }}</span>
+                        </td>
+                        <td>
+                            <code style="background: #0f172a; padding: 0.2rem 0.4rem; border-radius: 4px; color: #93c5fd;">{{ cliente.documento_ruc }}</code>
+                        </td>
+                        <td>{{ cliente.telefono|default:'-' }}</td>
+                        <td>
+                            {% if cliente.segmentacion == 'MIN' %}
+                                <span class="badge badge-min">Minorista</span>
+                            {% elif cliente.segmentacion == 'MAY' %}
+                                <span class="badge badge-may">Mayorista</span>
+                            {% elif cliente.segmentacion == 'COR' %}
+                                <span class="badge badge-cor">Corporativo</span>
+                            {% elif cliente.segmentacion == 'VIP' %}
+                                <span class="badge badge-vip">VIP</span>
+                            {% else %}
+                                <span class="badge">{{ cliente.get_segmentacion_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cliente.is_active %}
+                                <span class="badge badge-active">Activo</span>
+                            {% else %}
+                                <span class="badge badge-inactive">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                                <a href="{% url 'customers:cliente-detail' cliente.pk %}" class="btn-icon" title="Ver Detalles">Ver</a>
+                                <a href="{% url 'customers:cliente-update' cliente.pk %}" class="btn-icon" title="Editar">Editar</a>
+                                <a href="{% url 'customers:cliente-delete' cliente.pk %}" class="btn-icon btn-icon-danger" title="Eliminar">Eliminar</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="pagination">
+                <div>
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} clientes en total)
+                </div>
+                <div class="pagination-controls">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="btn btn-sm btn-secondary">&laquo; Anterior</a>
+                    {% endif %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="btn btn-sm btn-secondary">Siguiente &raquo;</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <h3>No se encontraron clientes</h3>
+            <p>Intenta ajustar tus criterios de búsqueda o filtros de segmento.</p>
+            <div style="margin-top: 1.5rem;">
+                <a href="{% url 'customers:cliente-create' %}" class="btn btn-primary">+ Registrar Primer Cliente</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
