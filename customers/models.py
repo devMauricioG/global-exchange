@@ -1,9 +1,9 @@
 from django.db import models
 
-from django.db import models
-
 
 class Cliente(models.Model):
+    """Representa un cliente de la casa de cambio, con su segmentación comercial."""
+
     class Segmentacion(models.TextChoices):
         MINORISTA = 'MIN', 'Minorista'
         MAYORISTA = 'MAY', 'Mayorista'
