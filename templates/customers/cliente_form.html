@@ -4,157 +4,663 @@
 
 {% block extra_head %}
 <style>
-    .form-card {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 1rem;
-        padding: 2.25rem;
-        max-width: 680px;
+    /* ==========================================================================
+       FORMULARIO DE CLIENTE - CREACIÓN / EDICIÓN
+       ========================================================================== */
+
+    .form-page-wrapper {
+        max-width: 780px;
         margin: 0 auto;
     }
 
-    .form-header {
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 1.25rem;
-        margin-bottom: 1.75rem;
-    }
-
-    .form-header h1 {
-        font-size: 1.6rem;
-        color: #f8fafc;
-    }
-
-    .form-header p {
-        color: var(--text-muted);
-        font-size: 0.925rem;
-        margin-top: 0.25rem;
-    }
-
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .checkbox-group {
+    .form-page-header {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        background: #0f172a;
-        padding: 0.875rem 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid var(--border-color);
+        gap: 1rem;
+        margin-bottom: 2rem;
     }
 
-    .checkbox-group label {
-        margin-bottom: 0;
-        cursor: pointer;
+    .form-page-header a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: color 0.15s;
+    }
+
+    .form-page-header a:hover {
+        color: var(--primary);
+    }
+
+    .form-page-header .separator {
+        color: var(--border-light);
+        font-size: 1.1rem;
+    }
+
+    .form-page-header .breadcrumb-current {
         color: var(--text-main);
-        font-size: 0.95rem;
-        font-weight: 500;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    /* Main Form Card */
+    .form-card-main {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4);
+    }
+
+    .form-card-header {
+        padding: 2rem 2.25rem 1.75rem;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(15, 23, 42, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .form-icon-wrapper {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .form-card-header h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #f8fafc;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.25rem;
+    }
+
+    .form-card-header p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .form-card-body {
+        padding: 2.25rem;
+    }
+
+    /* Section Headers */
+    .form-section {
+        margin-bottom: 2.25rem;
+    }
+
+    .form-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-muted);
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-section-title::before {
+        content: '';
+        display: inline-block;
+        width: 3px;
+        height: 14px;
+        background: var(--primary);
+        border-radius: 2px;
+    }
+
+    /* Two-column grid */
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+
+    @media (max-width: 640px) {
+        .form-grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Segment Selector Cards */
+    .segment-selector {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    @media (max-width: 480px) {
+        .segment-selector {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .segment-option {
+        position: relative;
+    }
+
+    .segment-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .segment-card-label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        padding: 1rem 1.1rem;
+        border-radius: 0.75rem;
+        border: 1.5px solid var(--border-color);
+        background: rgba(15, 23, 42, 0.8);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .segment-card-label:hover {
+        border-color: var(--primary);
+        background: rgba(56, 189, 248, 0.05);
+    }
+
+    .segment-option input[type="radio"]:checked + .segment-card-label {
+        border-color: var(--primary);
+        background: rgba(56, 189, 248, 0.08);
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .segment-card-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+
+    .segment-card-desc {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* Custom styling for hidden select */
+    .hidden-select {
+        display: none;
+    }
+
+    /* Toggle Switch for is_active */
+    .toggle-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .toggle-group:hover {
+        border-color: var(--border-light);
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #374151;
+        border-radius: 24px;
+        transition: 0.25s;
+        cursor: pointer;
+    }
+
+    .toggle-slider::before {
+        content: '';
+        position: absolute;
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        border-radius: 50%;
+        transition: 0.25s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: #10b981;
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+        transform: translateX(20px);
+    }
+
+    .toggle-label-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .toggle-label-group strong {
+        font-size: 0.925rem;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .toggle-label-group span {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 0.1rem;
+    }
+
+    /* Error Styles */
+    .field-error-list {
+        list-style: none;
+        padding: 0;
+        margin: 0.4rem 0 0 0;
+    }
+
+    .field-error-list li {
+        color: #f87171;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .field-error-list li::before {
+        content: '!';
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgba(248, 113, 113, 0.15);
+        border: 1px solid rgba(248, 113, 113, 0.4);
+        font-size: 0.7rem;
+        font-weight: 800;
+        flex-shrink: 0;
+    }
+
+    .form-input-error {
+        border-color: var(--danger) !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    }
+
+    /* Global Error Banner */
+    .error-banner {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.75rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .error-banner-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .error-banner-body strong {
+        color: #f87171;
+        font-size: 0.9rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .error-banner-body ul {
+        margin: 0;
+        padding-left: 1rem;
+        color: #fca5a5;
+        font-size: 0.825rem;
+    }
+
+    /* Form Actions */
+    .form-card-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.875rem;
+        padding: 1.5rem 2.25rem;
+        border-top: 1px solid var(--border-color);
+        background: rgba(15, 23, 42, 0.4);
+    }
+
+    .btn-submit {
+        min-width: 140px;
+        position: relative;
+    }
+
+    .btn-submit.loading {
+        pointer-events: none;
+        opacity: 0.7;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="form-card">
-    <div class="form-header">
-        <h1>{{ title }}</h1>
-        <p>Completa la información del cliente para registrarlo en el sistema.</p>
+<div class="form-page-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="form-page-header">
+        <a href="{% url 'customers:cliente-list' %}">👥 Clientes</a>
+        <span class="separator">/</span>
+        {% if action == 'Actualizar' %}
+            <a href="{% url 'customers:cliente-detail' form.instance.pk %}">{{ form.instance.nombre|truncatechars:30 }}</a>
+            <span class="separator">/</span>
+        {% endif %}
+        <span class="breadcrumb-current">{{ action|default:'Nuevo' }} Cliente</span>
     </div>
 
-    <form method="post" novalidate>
-        {% csrf_token %}
+    <div class="form-card-main">
 
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger" style="margin-bottom: 1.5rem;">
-                {{ form.non_field_errors }}
+        <!-- Card Header -->
+        <div class="form-card-header">
+            <div class="form-icon-wrapper">
+                {% if action == 'Actualizar' %}✏️{% else %}➕{% endif %}
             </div>
-        {% endif %}
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }} *</label>
-            {{ form.nombre }}
-            {% if form.nombre.errors %}
-                <ul class="errorlist">
-                    {% for error in form.nombre.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.documento_ruc.id_for_label }}">{{ form.documento_ruc.label }} *</label>
-            {{ form.documento_ruc }}
-            {% if form.documento_ruc.errors %}
-                <ul class="errorlist">
-                    {% for error in form.documento_ruc.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.correo.id_for_label }}">{{ form.correo.label }} *</label>
-            {{ form.correo }}
-            {% if form.correo.errors %}
-                <ul class="errorlist">
-                    {% for error in form.correo.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
-            {{ form.telefono }}
-            {% if form.telefono.errors %}
-                <ul class="errorlist">
-                    {% for error in form.telefono.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.segmentacion.id_for_label }}">{{ form.segmentacion.label }} *</label>
-            {{ form.segmentacion }}
-            {% if form.segmentacion.errors %}
-                <ul class="errorlist">
-                    {% for error in form.segmentacion.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <div class="checkbox-group">
-                {{ form.is_active }}
-                <label for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+            <div>
+                <h1>{{ title }}</h1>
+                <p>
+                    {% if action == 'Actualizar' %}
+                        Modifica la información registrada del cliente.
+                    {% else %}
+                        Completa los datos para registrar un nuevo cliente en el sistema.
+                    {% endif %}
+                </p>
             </div>
-            {% if form.is_active.errors %}
-                <ul class="errorlist">
-                    {% for error in form.is_active.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
         </div>
 
-        <div class="form-actions">
+        <!-- Form Body -->
+        <div class="form-card-body">
+            <form method="post" novalidate id="clienteForm">
+                {% csrf_token %}
+
+                <!-- Error Banner -->
+                {% if form.errors %}
+                    <div class="error-banner">
+                        <span class="error-banner-icon">⚠️</span>
+                        <div class="error-banner-body">
+                            <strong>Por favor corrige los errores antes de continuar</strong>
+                            <ul>
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Sección 1: Datos Principales -->
+                <div class="form-section">
+                    <div class="form-section-title">Datos Principales e Identificación</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.nombre.id_for_label }}">
+                                {{ form.nombre.label }} <span style="color: #f87171;">*</span>
+                            </label>
+                            {% if form.nombre.errors %}
+                                {% with form.nombre.field.widget.attrs as attrs %}{% endwith %}
+                                <input
+                                    type="text"
+                                    name="{{ form.nombre.html_name }}"
+                                    id="{{ form.nombre.id_for_label }}"
+                                    class="form-input form-input-error"
+                                    placeholder="Ej. Juan Pérez o Empresa S.A."
+                                    value="{{ form.nombre.value|default:'' }}"
+                                    required
+                                />
+                            {% else %}
+                                {{ form.nombre }}
+                            {% endif %}
+                            {% if form.nombre.errors %}
+                                <ul class="field-error-list">
+                                    {% for error in form.nombre.errors %}<li>{{ error }}</li>{% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.documento_ruc.id_for_label }}">
+                                {{ form.documento_ruc.label }} <span style="color: #f87171;">*</span>
+                            </label>
+                            {% if form.documento_ruc.errors %}
+                                <input
+                                    type="text"
+                                    name="{{ form.documento_ruc.html_name }}"
+                                    id="{{ form.documento_ruc.id_for_label }}"
+                                    class="form-input form-input-error"
+                                    placeholder="Ej. 1234567-8 o CI/RUC"
+                                    value="{{ form.documento_ruc.value|default:'' }}"
+                                    required
+                                />
+                            {% else %}
+                                {{ form.documento_ruc }}
+                            {% endif %}
+                            {% if form.documento_ruc.errors %}
+                                <ul class="field-error-list">
+                                    {% for error in form.documento_ruc.errors %}<li>{{ error }}</li>{% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección 2: Información de Contacto -->
+                <div class="form-section">
+                    <div class="form-section-title">Información de Contacto</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.correo.id_for_label }}">
+                                {{ form.correo.label }} <span style="color: #f87171;">*</span>
+                            </label>
+                            {% if form.correo.errors %}
+                                <input
+                                    type="email"
+                                    name="{{ form.correo.html_name }}"
+                                    id="{{ form.correo.id_for_label }}"
+                                    class="form-input form-input-error"
+                                    placeholder="cliente@ejemplo.com"
+                                    value="{{ form.correo.value|default:'' }}"
+                                    required
+                                />
+                            {% else %}
+                                {{ form.correo }}
+                            {% endif %}
+                            {% if form.correo.errors %}
+                                <ul class="field-error-list">
+                                    {% for error in form.correo.errors %}<li>{{ error }}</li>{% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.telefono.id_for_label }}">
+                                {{ form.telefono.label }}
+                                <span style="color: var(--text-muted); font-weight: 400; font-size: 0.8rem;">(opcional)</span>
+                            </label>
+                            {{ form.telefono }}
+                            {% if form.telefono.errors %}
+                                <ul class="field-error-list">
+                                    {% for error in form.telefono.errors %}<li>{{ error }}</li>{% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección 3: Segmentación y Estado -->
+                <div class="form-section">
+                    <div class="form-section-title">Segmentación Comercial y Estado</div>
+
+                    <!-- Hidden original select (preserved for form submission) -->
+                    <div style="margin-bottom: 1.25rem;">
+                        <label class="form-label" style="margin-bottom: 0.75rem; display: block;">
+                            Categoría de Segmentación <span style="color: #f87171;">*</span>
+                        </label>
+
+                        {{ form.segmentacion }}
+
+                        <!-- Visual Segment Selector -->
+                        <div class="segment-selector" id="segmentVisualSelector" style="margin-top: 0.75rem;">
+                            <div class="segment-option">
+                                <input type="radio" name="seg_visual" id="seg_min" value="MIN"
+                                    {% if form.segmentacion.value == 'MIN' %}checked{% endif %}>
+                                <label class="segment-card-label" for="seg_min">
+                                    <span class="segment-card-title">🛒 Minorista</span>
+                                    <span class="segment-card-desc">Cliente persona física o compras al por menor.</span>
+                                </label>
+                            </div>
+                            <div class="segment-option">
+                                <input type="radio" name="seg_visual" id="seg_may" value="MAY"
+                                    {% if form.segmentacion.value == 'MAY' %}checked{% endif %}>
+                                <label class="segment-card-label" for="seg_may">
+                                    <span class="segment-card-title" style="color: #c084fc;">📦 Mayorista</span>
+                                    <span class="segment-card-desc">Distribuidores y compradores de alto volumen.</span>
+                                </label>
+                            </div>
+                            <div class="segment-option">
+                                <input type="radio" name="seg_visual" id="seg_cor" value="COR"
+                                    {% if form.segmentacion.value == 'COR' %}checked{% endif %}>
+                                <label class="segment-card-label" for="seg_cor">
+                                    <span class="segment-card-title" style="color: #fbbf24;">🏢 Corporativo</span>
+                                    <span class="segment-card-desc">Empresas e instituciones con acuerdos comerciales.</span>
+                                </label>
+                            </div>
+                            <div class="segment-option">
+                                <input type="radio" name="seg_visual" id="seg_vip" value="VIP"
+                                    {% if form.segmentacion.value == 'VIP' %}checked{% endif %}>
+                                <label class="segment-card-label" for="seg_vip">
+                                    <span class="segment-card-title" style="color: #34d399;">⭐ VIP</span>
+                                    <span class="segment-card-desc">Clientes preferenciales de alto valor estratégico.</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {% if form.segmentacion.errors %}
+                            <ul class="field-error-list" style="margin-top: 0.5rem;">
+                                {% for error in form.segmentacion.errors %}<li>{{ error }}</li>{% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Active Status Toggle -->
+                    <div class="form-group">
+                        <label class="form-label" style="display: block; margin-bottom: 0.5rem;">Estado del Cliente</label>
+                        <label class="toggle-group" for="{{ form.is_active.id_for_label }}">
+                            <div class="toggle-switch">
+                                {{ form.is_active }}
+                                <span class="toggle-slider"></span>
+                            </div>
+                            <div class="toggle-label-group">
+                                <strong>Cliente Activo</strong>
+                                <span>Habilitado para operar en el sistema de cambio.</span>
+                            </div>
+                        </label>
+                        {% if form.is_active.errors %}
+                            <ul class="field-error-list" style="margin-top: 0.5rem;">
+                                {% for error in form.is_active.errors %}<li>{{ error }}</li>{% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Card Footer with Actions -->
+        <div class="form-card-footer">
             <a href="{% url 'customers:cliente-list' %}" class="btn btn-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary">
-                {{ action|default:'Guardar' }} Cliente
+            <button type="submit" form="clienteForm" class="btn btn-primary btn-submit" id="submitBtn">
+                {% if action == 'Actualizar' %}
+                    ✅ Guardar Cambios
+                {% else %}
+                    ➕ Registrar Cliente
+                {% endif %}
             </button>
         </div>
-    </form>
+    </div>
 </div>
+
+<script>
+(function () {
+    // Sync visual radio buttons with real Django select
+    const realSelect = document.getElementById('{{ form.segmentacion.id_for_label }}');
+    const radios = document.querySelectorAll('[name="seg_visual"]');
+
+    if (realSelect) {
+        // Hide original select since we use visual cards
+        realSelect.style.display = 'none';
+
+        // Sync radio -> select
+        radios.forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    realSelect.value = this.value;
+                }
+            });
+        });
+
+        // On page load sync select -> radio (for edit mode)
+        var currentVal = realSelect.value;
+        if (currentVal) {
+            var matchingRadio = document.querySelector('[name="seg_visual"][value="' + currentVal + '"]');
+            if (matchingRadio) { matchingRadio.checked = true; }
+        }
+    }
+
+    // Replace checkbox with toggle-friendly input
+    var checkbox = document.getElementById('{{ form.is_active.id_for_label }}');
+    if (checkbox) {
+        checkbox.classList.remove('form-checkbox');
+    }
+
+    // Submit button loading state
+    var form = document.getElementById('clienteForm');
+    var submitBtn = document.getElementById('submitBtn');
+    if (form && submitBtn) {
+        form.addEventListener('submit', function() {
+            submitBtn.classList.add('loading');
+            submitBtn.textContent = '⏳ Guardando...';
+        });
+    }
+})();
+</script>
 {% endblock %}

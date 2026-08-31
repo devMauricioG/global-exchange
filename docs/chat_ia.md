@@ -29,10 +29,29 @@ consigna. Cada integrante agrega su propia entrada al usar una IA.
 
 ---
 
-## [Nombre] — [Fecha] — [Herramienta de IA]
+## Pablo Elizeche — 31/08/2026 — Antigravity IDE (Google DeepMind)
 
-**Contexto:**
+**Contexto:** Sprint 1 — Construcción de interfaces gráficas para clientes (SCRUM-29)
 
 **Resumen:**
+- Análisis de la estructura visual existente (`base.html`, tokens CSS del sistema de diseño)
+  para identificar las brechas de UX en las plantillas del módulo `customers`.
+- Diseño de la arquitectura de componentes CSS: paleta segmentada por tipo de cliente
+  (Minorista, Mayorista, Corporativo, VIP), sistema de badges semánticos, avatares
+  dinámicos con iniciales y gradientes de color por segmento.
+- Estructuración del layout de `cliente_list.html`: tarjetas KPI de estadísticas,
+  pestañas de filtrado rápido por segmento, barra de filtros avanzada y tabla interactiva
+  con acciones por fila. La IA fue utilizada como herramienta de asistencia en la
+  generación de la maqueta base; el ajuste de estilos, la integración con las vistas
+  Django y la revisión de accesibilidad fueron realizados manualmente.
+- Maquetación del formulario (`cliente_form.html`) con selector visual de segmentación
+  por tarjetas tipo card (en lugar del `<select>` estándar), toggle de estado y
+  secciones agrupadas con cabeceras descriptivas.
+- Rediseño de `cliente_detail.html` con perfil hero, avatar grande con iniciales,
+  tarjetas de datos con iconos y barra de timestamps.
+- Mejora de `cliente_confirm_delete.html` con ícono animado de advertencia y resumen
+  del cliente a eliminar para confirmar la acción crítica.
+- Verificación con la suite de pruebas automatizadas (`manage.py test`) tras cada
+  cambio para asegurar la integridad de las vistas.
 
----
+---
