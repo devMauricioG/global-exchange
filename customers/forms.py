@@ -1,10 +1,24 @@
+"""
+Módulo de formularios para la aplicación de clientes.
+
+Contiene las clases de formulario Django utilizadas tanto para la creación y edición
+de entidades :class:`~customers.models.Cliente` como para el filtrado avanzado
+y búsqueda en los listados web.
+"""
+
 from django import forms
 from .models import Cliente
 
 
 class ClienteForm(forms.ModelForm):
     """
-    Formulario para la creación y edición de Clientes.
+    Formulario basado en modelo (:class:`django.forms.ModelForm`) para crear y editar clientes.
+
+    Aplica estilos visuales específicos a través de atributos HTML de clase (`form-input`, `form-select`, etc.)
+    y asegura la captura de datos con validaciones estándar de Django.
+
+    :cvar model: Modelo de referencia (:class:`~customers.models.Cliente`).
+    :cvar fields: Lista de campos gestionados en el formulario.
     """
 
     class Meta:
@@ -68,7 +82,19 @@ class ClienteForm(forms.ModelForm):
 
 class ClienteFilterForm(forms.Form):
     """
-    Formulario para filtrar clientes por segmento, búsqueda por documento/nombre y estado.
+    Formulario de filtrado y búsqueda para el listado de clientes.
+
+    Permite a los usuarios filtrar registros por segmento comercial, estado de actividad,
+    documento fiscal/civil exacto o realizar búsquedas textuales amplias.
+
+    :ivar q: Término de búsqueda general (coincidencia en nombre, RUC, email o teléfono).
+    :vartype q: django.forms.CharField
+    :ivar segmentacion: Opción seleccionada del catálogo de segmentación.
+    :vartype segmentacion: django.forms.ChoiceField
+    :ivar documento_ruc: Filtro de documento o RUC.
+    :vartype documento_ruc: django.forms.CharField
+    :ivar is_active: Filtro por estado del cliente ('true', 'false' o '' para todos).
+    :vartype is_active: django.forms.ChoiceField
     """
 
     q = forms.CharField(
