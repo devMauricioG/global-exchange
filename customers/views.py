@@ -129,6 +129,14 @@ class ClienteListView(LoginRequiredMixin, ListView):
         context['segment_choices'] = Cliente.Segmentacion.choices
         context['total_count'] = Cliente.objects.count()
         context['active_count'] = Cliente.objects.filter(is_active=True).count()
+        context['inactive_count'] = Cliente.objects.filter(is_active=False).count()
+        context['count_min'] = Cliente.objects.filter(segmentacion=Cliente.Segmentacion.MINORISTA).count()
+        context['count_may'] = Cliente.objects.filter(segmentacion=Cliente.Segmentacion.MAYORISTA).count()
+        context['count_cor'] = Cliente.objects.filter(segmentacion=Cliente.Segmentacion.CORPORATIVO).count()
+        context['count_vip'] = Cliente.objects.filter(segmentacion=Cliente.Segmentacion.VIP).count()
+        context['current_segment'] = self.request.GET.get('segmentacion', '')
+        context['current_is_active'] = self.request.GET.get('is_active', '')
+        context['current_q'] = self.request.GET.get('q', '')
 
         query_params = self.request.GET.copy()
         if 'page' in query_params:
