@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load auth_tags %}
+
+{% block title %}Inicio - Global Exchange{% endblock %}
+
+{% block extra_head %}
+<style>
+    .home-wrapper {
+        max-width: 900px;
+        margin: 1rem auto;
+    }
+
+    .welcome-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 1.25rem;
+        padding: 2.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        margin-bottom: 2rem;
+    }
+
+    .welcome-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .welcome-header h1 {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #38bdf8;
+        letter-spacing: -0.025em;
+    }
+
+    .info-table {
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+        font-size: 0.95rem;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: #f1f5f9;
+    }
+
+    /* Quick Access Cards Grid */
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 1rem;
+    }
+
+    .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .quick-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.875rem;
+        padding: 1.5rem;
+        text-decoration: none;
+        color: var(--text-main);
+        transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .quick-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(56, 189, 248, 0.15);
+    }
+
+    .quick-icon {
+        font-size: 1.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .quick-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.35rem;
+    }
+
+    .quick-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="home-wrapper">
+    <div class="welcome-card">
+        <div class="welcome-header">
+            <div>
+                <span class="badge badge-active" style="margin-bottom: 0.5rem;">● Sesión SSO Activa</span>
+                <h1>¡Bienvenido, {{ user.first_name|default:user.username }}!</h1>
+            </div>
+            <div>
+                {% user_role_badge user %}
+            </div>
+        </div>
+
+        <div class="info-table">
+            <div class="info-row">
+                <span class="info-label">Nombre de Usuario:</span>
+                <span class="info-value">{{ user.username }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Correo Electrónico:</span>
+                <span class="info-value">{{ user.email|default:'No especificado' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Nombre Completo:</span>
+                <span class="info-value">{{ user.get_full_name|default:'-' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Rol Principal Detectado:</span>
+                <span class="info-value" style="color: #38bdf8;">{{ primary_role }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Grupos / Roles JWT Asignados:</span>
+                <span class="info-value">
+                    {% if user_roles %}
+                        {{ user_roles|join:", " }}
+                    {% else %}
+                        Sin grupos asignados
+                    {% endif %}
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Permisos de Staff / Operador:</span>
+                <span class="info-value">{% if user.is_staff %}Sí{% else %}No{% endif %}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Superusuario:</span>
+                <span class="info-value">{% if user.is_superuser %}Sí{% else %}No{% endif %}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulos y Accesos Rápidos Dinámicos según Roles -->
+    <h2 class="section-title">Módulos y Accesos Permitidos</h2>
+    <div class="quick-grid">
+        <!-- Acceso Clientes: para Admin u Operador -->
+        {% if is_operator or user|has_any_role:"admin,operator" %}
+            <a href="{% url 'customers:cliente-list' %}" class="quick-card">
+                <div class="quick-icon">👥</div>
+                <div class="quick-title">Gestión de Clientes</div>
+                <div class="quick-desc">Administra el directorio de clientes, segmentaciones (Minorista, Mayorista, Corporativo, VIP) y búsquedas por RUC.</div>
+            </a>
+
+            <a href="{% url 'customers:cliente-create' %}" class="quick-card">
+                <div class="quick-icon">➕</div>
+                <div class="quick-title">Nuevo Cliente</div>
+                <div class="quick-desc">Formulario de registro para dar de alta clientes en el sistema con validación inmediata.</div>
+            </a>
+        {% endif %}
+
+        <!-- Acceso Exclusivo: Administrador -->
+        {% if is_admin or user|has_role:"admin" %}
+            <a href="{% url 'admin:index' %}" class="quick-card">
+                <div class="quick-icon">⚙️</div>
+                <div class="quick-title">Panel Administrativo</div>
+                <div class="quick-desc">Acceso avanzado a la consola de administración de Django para gestión de modelos, usuarios y permisos.</div>
+            </a>
+        {% endif %}
+
+        <!-- Acceso API REST: para todos los autenticados -->
+        <a href="{% url 'customers:api-cliente-list-create' %}" class="quick-card">
+            <div class="quick-icon">🌐</div>
+            <div class="quick-title">API REST Clientes</div>
+            <div class="quick-desc">Consulta endpoints JSON programáticos con filtros de segmentación y parámetros query.</div>
+        </a>
+    </div>
+</div>
+{% endblock %}

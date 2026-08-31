@@ -1,15 +1,17 @@
 """
-Backend de autenticación OIDC personalizado para Keycloak.
+Módulo de backends de autenticación personalizados para la integración con Keycloak.
 
-Extiende OIDCAuthenticationBackend de mozilla-django-oidc para:
-- Crear usuarios automáticamente a partir de claims OIDC
-- Actualizar datos del usuario en cada login
-- Mapear roles de Keycloak a grupos y permisos de Django
+Extiende :class:`mozilla_django_oidc.auth.OIDCAuthenticationBackend` para:
+- Crear usuarios automáticamente a partir de claims del token OIDC/JWT.
+- Actualizar datos del perfil de usuario en cada inicio de sesión.
+- Mapear roles de Keycloak a grupos y permisos nativos de Django.
 """
 
 import logging
-
-from django.contrib.auth.models import Group
+from typing import Any, Dict, List, Optional
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractBaseUser, Group
+from django.db.models import QuerySet
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 logger = logging.getLogger(__name__)
@@ -20,52 +22,70 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
     Backend OIDC que integra Keycloak con el sistema de usuarios de Django.
 
     Claims esperadas del token ID de Keycloak:
-        - email: correo electrónico del usuario
-        - preferred_username: nombre de usuario
-        - given_name: nombre
-        - family_name: apellido
-        - realm_roles: lista de roles del realm (requiere protocol mapper)
+        * ``email``: Correo electrónico del usuario.
+        * ``preferred_username``: Nombre de usuario en Keycloak.
+        * ``given_name``: Nombre de pila.
+        * ``family_name``: Apellido.
+        * ``realm_roles``: Lista de roles del realm (requiere protocol mapper en Keycloak).
     """
 
-    def create_user(self, claims):
+    def create_user(self, claims: Dict[str, Any]) -> AbstractBaseUser:
         """
-        Crea un nuevo usuario de Django a partir de las claims OIDC.
+        Crea un nuevo usuario de Django a partir de las claims del token OIDC.
 
         Se invoca automáticamente cuando un usuario inicia sesión por primera
-        vez vía Keycloak y no existe en la base de datos local de Django.
+        vez vía Keycloak y no existe previamente en la base de datos local.
+
+        :param claims: Diccionario de claims decodificadas del token JWT / ID token.
+        :type claims: dict
+        :return: Instancia del nuevo usuario creado y persistido.
+        :rtype: django.contrib.auth.models.User
         """
         user = super().create_user(claims)
         self._update_user_from_claims(user, claims)
         logger.info("Usuario creado vía OIDC: %s", user.username)
         return user
 
-    def update_user(self, user, claims):
+    def update_user(self, user: AbstractBaseUser, claims: Dict[str, Any]) -> AbstractBaseUser:
         """
-        Actualiza un usuario existente con claims frescas en cada login.
+        Actualiza un usuario existente con claims frescas en cada inicio de sesión.
 
-        Garantiza que los datos locales de Django (nombre, email, roles)
+        Garantiza que los datos locales de Django (nombre, email, roles y permisos)
         estén siempre sincronizados con Keycloak.
+
+        :param user: Instancia de usuario de Django a actualizar.
+        :type user: django.contrib.auth.models.User
+        :param claims: Diccionario de claims provistas por Keycloak.
+        :type claims: dict
+        :return: Instancia del usuario actualizado.
+        :rtype: django.contrib.auth.models.User
         """
         self._update_user_from_claims(user, claims)
         logger.info("Usuario actualizado vía OIDC: %s", user.username)
         return user
 
-    def filter_users_by_claims(self, claims):
+    def filter_users_by_claims(self, claims: Dict[str, Any]) -> QuerySet:
         """
-        Busca usuarios existentes por email para evitar duplicados.
+        Busca usuarios existentes por dirección de correo electrónico para evitar duplicados.
 
-        Keycloak garantiza unicidad del email, así que usamos este campo
-        como identificador principal para vincular cuentas.
+        :param claims: Diccionario de claims del token OIDC.
+        :type claims: dict
+        :return: QuerySet con los usuarios coincidentes por email.
+        :rtype: django.db.models.QuerySet
         """
         email = claims.get("email")
         if not email:
             return self.UserModel.objects.none()
         return self.UserModel.objects.filter(email=email)
 
-    def _update_user_from_claims(self, user, claims):
+    def _update_user_from_claims(self, user: AbstractBaseUser, claims: Dict[str, Any]) -> None:
         """
-        Actualiza los campos del usuario y sus grupos/permisos
-        a partir de las claims del token OIDC.
+        Actualiza los campos del usuario y sincroniza sus grupos y permisos a partir de las claims.
+
+        :param user: Usuario a actualizar.
+        :type user: django.contrib.auth.models.User
+        :param claims: Diccionario con claims OIDC.
+        :type claims: dict
         """
         user.email = claims.get("email", user.email)
         user.first_name = claims.get("given_name", "")
@@ -82,14 +102,19 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
         user.save()
 
-    def _map_roles_to_permissions(self, user, realm_roles):
+    def _map_roles_to_permissions(self, user: AbstractBaseUser, realm_roles: List[str]) -> None:
         """
         Mapea roles del realm de Keycloak a grupos y permisos de Django.
 
-        Mapeo:
-            - 'admin'    → is_staff=True, is_superuser=True, grupo 'admin'
-            - 'operator' → is_staff=True, is_superuser=False, grupo 'operator'
-            - 'user'     → is_staff=False, is_superuser=False, grupo 'user'
+        Esquema de mapeo:
+            * ``admin``: ``is_staff=True``, ``is_superuser=True``, grupo 'admin'.
+            * ``operator``: ``is_staff=True``, ``is_superuser=False``, grupo 'operator'.
+            * ``user``: ``is_staff=False``, ``is_superuser=False``, grupo 'user'.
+
+        :param user: Usuario al que se le aplicarán los roles y grupos.
+        :type user: django.contrib.auth.models.User
+        :param realm_roles: Lista de nombres de roles extraídos del token.
+        :type realm_roles: list[str]
         """
         # Reset de permisos base antes de recalcular
         user.is_staff = False
