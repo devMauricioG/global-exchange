@@ -7,9 +7,10 @@ SECRET_KEY = 'test-key-for-running-tests-only'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+        'NAME': BASE_DIR / 'test_db.sqlite3',
     }
 }
+
 
 # Hashing más rápido para agilizar las pruebas
 PASSWORD_HASHERS = [
