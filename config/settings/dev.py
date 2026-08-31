@@ -18,6 +18,7 @@ DATABASES = {
 
 # Integración Keycloak
 KEYCLOAK_SERVER_URL = os.getenv("KEYCLOAK_SERVER_URL", "http://localhost:8080")
+KEYCLOAK_PUBLIC_URL = os.getenv("KEYCLOAK_PUBLIC_URL", "http://localhost:8080")
 KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "GlobalExchangeRealm")
 KEYCLOAK_CLIENT_ID = os.getenv("KEYCLOAK_CLIENT_ID", "django-app")
 KEYCLOAK_CLIENT_SECRET = os.getenv("KEYCLOAK_CLIENT_SECRET", "tu-secret-local")
@@ -32,10 +33,15 @@ DEFAULT_FROM_EMAIL = 'noreply@globalexchange.local'
 
 # ─── Configuración OIDC (mozilla-django-oidc + Keycloak) ───────────────────────
 
-# Endpoints del OpenID Provider (Keycloak)
+# Endpoints públicos (el navegador del cliente es redirigido a estos)
 OIDC_OP_AUTHORIZATION_ENDPOINT = (
-    f"{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
+    f"{KEYCLOAK_PUBLIC_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
 )
+OIDC_OP_LOGOUT_ENDPOINT = (
+    f"{KEYCLOAK_PUBLIC_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/logout"
+)
+
+# Endpoints internos (Django se comunica directamente servidor a servidor)
 OIDC_OP_TOKEN_ENDPOINT = (
     f"{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/token"
 )
@@ -44,9 +50,6 @@ OIDC_OP_USER_ENDPOINT = (
 )
 OIDC_OP_JWKS_ENDPOINT = (
     f"{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
-)
-OIDC_OP_LOGOUT_ENDPOINT = (
-    f"{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/logout"
 )
 
 # Credenciales del Relying Party (cliente django-app en Keycloak)

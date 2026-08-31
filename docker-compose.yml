@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       KEYCLOAK_DB_NAME: ${KEYCLOAK_DB_NAME:-keycloak_db}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
@@ -40,6 +40,10 @@ services:
       KC_DB_PASSWORD: ${DB_PASSWORD:-postgres}
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
+      KC_HOSTNAME_URL: "http://localhost:8080"
+      KC_HOSTNAME_ADMIN_URL: "http://localhost:8080"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
+      KC_HOSTNAME_STRICT: "false"
     volumes:
       - ./keycloak/imports:/opt/keycloak/data/import
     ports:
@@ -67,6 +71,7 @@ services:
       - DEBUG=${DEBUG:-True}
       - DJANGO_SETTINGS_MODULE=config.settings.dev
       - KEYCLOAK_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_PUBLIC_URL=http://localhost:8080
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-GlobalExchangeRealm}
       - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-django-app}
       - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET:-tu-secret-local}
