@@ -29,10 +29,13 @@ class ClienteAdmin(admin.ModelAdmin):
         'correo',
         'telefono',
         'segmentacion',
+        'keycloak_id',
+        'usuario',
         'is_active',
         'created_at',
     )
     list_filter = ('segmentacion', 'is_active', 'created_at')
-    search_fields = ('nombre', 'documento_ruc', 'correo', 'telefono')
+    search_fields = ('nombre', 'documento_ruc', 'correo', 'telefono', 'keycloak_id', 'usuario__username')
+    readonly_fields = ('created_at', 'updated_at')
     ordering = ('-created_at',)
     list_editable = ('segmentacion', 'is_active')

@@ -35,6 +35,7 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
         Se invoca automáticamente cuando un usuario inicia sesión por primera
         vez vía Keycloak y no existe previamente en la base de datos local.
+        Vincula automáticamente la ficha de cliente con el claim ``sub``.
 
         :param claims: Diccionario de claims decodificadas del token JWT / ID token.
         :type claims: dict
@@ -43,6 +44,7 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         """
         user = super().create_user(claims)
         self._update_user_from_claims(user, claims)
+        self._sync_cliente_keycloak(user, claims)
         logger.info("Usuario creado vía OIDC: %s", user.username)
         return user
 
@@ -51,7 +53,7 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         Actualiza un usuario existente con claims frescas en cada inicio de sesión.
 
         Garantiza que los datos locales de Django (nombre, email, roles y permisos)
-        estén siempre sincronizados con Keycloak.
+        y la vinculación con la ficha de cliente estén siempre sincronizados con Keycloak.
 
         :param user: Instancia de usuario de Django a actualizar.
         :type user: django.contrib.auth.models.User
@@ -61,8 +63,41 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         :rtype: django.contrib.auth.models.User
         """
         self._update_user_from_claims(user, claims)
+        self._sync_cliente_keycloak(user, claims)
         logger.info("Usuario actualizado vía OIDC: %s", user.username)
         return user
+
+    def _sync_cliente_keycloak(self, user: AbstractBaseUser, claims: Dict[str, Any]) -> None:
+        """
+        Sincroniza y vincula la ficha de Cliente con la identidad Keycloak (claim ``sub``).
+
+        Emite la señal :data:`~customers.signals.keycloak_user_authenticated` y ejecuta
+        el servicio de vinculación automática.
+
+        :param user: Usuario autenticado.
+        :type user: django.contrib.auth.models.User
+        :param claims: Diccionario de claims del token OIDC.
+        :type claims: dict
+        """
+        sub = claims.get("sub")
+        try:
+            from customers.signals import keycloak_user_authenticated
+            from customers.services import vincular_cliente_keycloak
+
+            vincular_cliente_keycloak(
+                user=user,
+                keycloak_id=sub,
+                email=claims.get("email"),
+                claims=claims,
+            )
+            keycloak_user_authenticated.send(
+                sender=self.__class__,
+                user=user,
+                claims=claims,
+                keycloak_id=sub,
+            )
+        except Exception as exc:
+            logger.exception("Error al sincronizar ficha de cliente para %s: %s", user.username, exc)
 
     def filter_users_by_claims(self, claims: Dict[str, Any]) -> QuerySet:
         """

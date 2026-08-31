@@ -6,6 +6,7 @@ asociadas para la clasificación y segmentación de clientes en la plataforma
 Global Exchange.
 """
 
+from django.conf import settings
 from django.db import models
 
 
@@ -14,10 +15,15 @@ class Cliente(models.Model):
     Modelo representativo de un Cliente dentro del sistema Global Exchange.
 
     Almacena los datos personales, fiscales, de contacto y clasificación por segmento
-    financiero/operativo del cliente.
+    financiero/operativo del cliente, así como su vinculación con la identidad de Keycloak
+    y el usuario de Django correspondiente.
 
     :ivar id: Identificador numérico único auto-incremental (clave primaria).
     :vartype id: int
+    :ivar keycloak_id: Identificador único universal (claim ``sub``) en Keycloak.
+    :vartype keycloak_id: str or None
+    :ivar usuario: Relación uno a uno opcional con el modelo de usuario de Django (:class:`django.contrib.auth.models.User`).
+    :vartype usuario: django.contrib.auth.models.User or None
     :ivar nombre: Nombre completo o razón social del cliente.
     :vartype nombre: str
     :ivar documento_ruc: Documento de identidad civil o RUC (único en el sistema).
@@ -50,6 +56,24 @@ class Cliente(models.Model):
         CORPORATIVO = 'COR', 'Corporativo'
         VIP = 'VIP', 'VIP'
 
+    keycloak_id = models.CharField(
+        max_length=255,
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name='ID de Keycloak (sub)',
+        help_text='Identificador único inmutable del usuario en Keycloak (claim sub).',
+    )
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cliente',
+        verbose_name='Usuario asociado',
+        help_text='Cuenta de usuario de Django asociada a esta ficha de cliente.',
+    )
     nombre = models.CharField(
         max_length=150,
         verbose_name='Nombre o Razón Social',
