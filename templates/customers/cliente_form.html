@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Global Exchange{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        padding: 2.25rem;
+        max-width: 680px;
+        margin: 0 auto;
+    }
+
+    .form-header {
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1.25rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .form-header h1 {
+        font-size: 1.6rem;
+        color: #f8fafc;
+    }
+
+    .form-header p {
+        color: var(--text-muted);
+        font-size: 0.925rem;
+        margin-top: 0.25rem;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #0f172a;
+        padding: 0.875rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .checkbox-group label {
+        margin-bottom: 0;
+        cursor: pointer;
+        color: var(--text-main);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <div class="form-header">
+        <h1>{{ title }}</h1>
+        <p>Completa la información del cliente para registrarlo en el sistema.</p>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" style="margin-bottom: 1.5rem;">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }} *</label>
+            {{ form.nombre }}
+            {% if form.nombre.errors %}
+                <ul class="errorlist">
+                    {% for error in form.nombre.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.documento_ruc.id_for_label }}">{{ form.documento_ruc.label }} *</label>
+            {{ form.documento_ruc }}
+            {% if form.documento_ruc.errors %}
+                <ul class="errorlist">
+                    {% for error in form.documento_ruc.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.correo.id_for_label }}">{{ form.correo.label }} *</label>
+            {{ form.correo }}
+            {% if form.correo.errors %}
+                <ul class="errorlist">
+                    {% for error in form.correo.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
+            {{ form.telefono }}
+            {% if form.telefono.errors %}
+                <ul class="errorlist">
+                    {% for error in form.telefono.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.segmentacion.id_for_label }}">{{ form.segmentacion.label }} *</label>
+            {{ form.segmentacion }}
+            {% if form.segmentacion.errors %}
+                <ul class="errorlist">
+                    {% for error in form.segmentacion.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <div class="checkbox-group">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+            </div>
+            {% if form.is_active.errors %}
+                <ul class="errorlist">
+                    {% for error in form.is_active.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'customers:cliente-list' %}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                {{ action|default:'Guardar' }} Cliente
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
