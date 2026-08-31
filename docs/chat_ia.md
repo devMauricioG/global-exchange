@@ -39,4 +39,31 @@ consigna. Cada integrante agrega su propia entrada al usar una IA.
 - Revisión de la estructura de claims OIDC en `mozilla-django-oidc`: validación de la extracción del claim inmutable `sub` (subject UUID) y claims de perfil (`email`, `given_name`, `family_name`).
 - Asistencia en la elaboración de la suite de pruebas unitarias para cubrir casos borde en la vinculación de clientes: sincronización por `sub`, vinculación por `correo` para registros preexistentes, creación automática y tolerancia a fallos.
 
----
+---
+
+## Pablo Elizeche — 31/08/2026 — Antigravity IDE (Google DeepMind)
+
+**Contexto:** Sprint 1 — Construcción de interfaces gráficas para clientes (SCRUM-29)
+
+**Resumen:**
+- Analicé los requisitos de UX del módulo `customers` y definí la arquitectura
+  visual: sistema de badges por segmento, avatares con iniciales, paleta de colores
+  por tipo de cliente (Minorista, Mayorista, Corporativo, VIP) y layout responsivo.
+- Diseñé e implementé el listado interactivo (`cliente_list.html`): tarjetas KPI
+  de estadísticas, pestañas de filtrado rápido por segmento, tabla con acciones
+  por fila y estado vacío amigable. Usé el asistente de IA para validar opciones
+  de estructura CSS y obtener sugerencias de componentes, que luego adapté al
+  sistema de diseño del proyecto.
+- Implementé el formulario de alta/edición (`cliente_form.html`) dividido en
+  secciones, con selector visual de segmentación por tarjetas tipo card y toggle
+  de estado. La integración con el `<select>` de Django y la validación visual
+  por campo la resolví yo; la IA fue consultada puntualmente para ideas de
+  presentación del toggle switch y manejo de errores.
+- Rediseñé la ficha de detalle (`cliente_detail.html`) y la pantalla de
+  confirmación de eliminación (`cliente_confirm_delete.html`). El diseño de la
+  animación de alerta y la jerarquía visual fueron decisiones propias; recurrí
+  a la IA para generar variantes de estilos CSS que luego seleccioné y ajusté.
+- Verifiqué la integridad de todo el módulo con la suite de pruebas automatizadas
+  (`manage.py test`) antes de publicar los cambios.
+
+---

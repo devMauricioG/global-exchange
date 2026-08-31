@@ -1,70 +1,177 @@
 {% extends 'base.html' %}
 
-{% block title %}Gestión de Clientes - Global Exchange{% endblock %}
+{% block title %}Directorio de Clientes - Global Exchange{% endblock %}
 
 {% block extra_head %}
 <style>
+    /* ==========================================================================
+       GESTIÓN DE CLIENTES - LISTADO INTERACTIVO
+       ========================================================================== */
+
     .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 2rem;
         flex-wrap: wrap;
-        gap: 1rem;
+        gap: 1.25rem;
     }
 
     .page-title-group h1 {
         font-size: 1.85rem;
-        font-weight: 700;
+        font-weight: 800;
         color: #f8fafc;
-        letter-spacing: -0.025em;
+        letter-spacing: -0.03em;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
 
     .page-title-group p {
         color: var(--text-muted);
         font-size: 0.95rem;
-        margin-top: 0.25rem;
+        margin-top: 0.35rem;
     }
 
-    /* Stats Grid */
+    /* Stats KPI Grid */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 1rem;
-        margin-bottom: 2rem;
+        margin-bottom: 1.75rem;
     }
 
     .stat-card {
-        background-color: var(--bg-card);
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+        backdrop-filter: blur(8px);
         border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
-        padding: 1.25rem;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
         display: flex;
         flex-direction: column;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--border-light);
+        box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--card-accent, transparent);
+    }
+
+    .stat-card.accent-total { --card-accent: linear-gradient(90deg, #38bdf8, #6366f1); }
+    .stat-card.accent-active { --card-accent: #10b981; }
+    .stat-card.accent-min { --card-accent: #38bdf8; }
+    .stat-card.accent-may { --card-accent: #a855f7; }
+    .stat-card.accent-cor { --card-accent: #f59e0b; }
+    .stat-card.accent-vip { --card-accent: #10b981; }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .stat-label {
-        font-size: 0.825rem;
-        font-weight: 600;
+        font-size: 0.8rem;
+        font-weight: 700;
         color: var(--text-muted);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.06em;
+    }
+
+    .stat-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
     }
 
     .stat-value {
-        font-size: 1.75rem;
-        font-weight: 700;
+        font-size: 1.85rem;
+        font-weight: 800;
         color: var(--text-main);
-        margin-top: 0.25rem;
+        margin-top: 0.5rem;
+        letter-spacing: -0.03em;
     }
 
-    /* Filter Toolbar */
+    /* Segment Navigation Tabs / Pills */
+    .segment-tabs {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        scrollbar-width: thin;
+    }
+
+    .segment-tab {
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--text-muted);
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .segment-tab:hover {
+        color: var(--text-main);
+        border-color: var(--border-light);
+        background: rgba(30, 41, 59, 0.9);
+    }
+
+    .segment-tab.active {
+        color: #0f172a;
+        background: var(--primary);
+        border-color: var(--primary);
+        box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
+    }
+
+    .segment-tab-count {
+        background: rgba(0, 0, 0, 0.25);
+        padding: 0.15rem 0.45rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .segment-tab.active .segment-tab-count {
+        background: rgba(15, 23, 42, 0.25);
+        color: #0f172a;
+    }
+
+    /* Filter Toolbar Card */
     .filter-bar {
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
-        padding: 1.25rem;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
         margin-bottom: 1.5rem;
+        box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.2);
     }
 
     .filter-form {
@@ -74,13 +181,13 @@
         align-items: end;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 1024px) {
         .filter-form {
             grid-template-columns: 1fr 1fr;
         }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
         .filter-form {
             grid-template-columns: 1fr;
         }
@@ -91,111 +198,269 @@
         gap: 0.5rem;
     }
 
-    /* Table Styles */
-    .table-container {
+    /* Table Component */
+    .table-card {
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
+        border-radius: 0.875rem;
         overflow: hidden;
+        box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.3);
     }
 
-    .table {
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .custom-table {
         width: 100%;
         border-collapse: collapse;
         text-align: left;
         font-size: 0.925rem;
     }
 
-    .table th {
+    .custom-table th {
         background-color: #0f172a;
         color: var(--text-muted);
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        padding: 1rem 1.25rem;
+        font-size: 0.725rem;
+        letter-spacing: 0.06em;
+        padding: 1.1rem 1.25rem;
         border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
     }
 
-    .table td {
-        padding: 1rem 1.25rem;
+    .custom-table td {
+        padding: 1.1rem 1.25rem;
         border-bottom: 1px solid var(--border-color);
         color: var(--text-main);
         vertical-align: middle;
     }
 
-    .table tr:last-child td {
+    .custom-table tr:last-child td {
         border-bottom: none;
     }
 
-    .table tr:hover {
-        background-color: rgba(255, 255, 255, 0.02);
+    .custom-table tbody tr {
+        transition: background-color 0.15s ease;
     }
 
-    .client-name {
-        font-weight: 600;
-        color: var(--text-main);
-        display: block;
+    .custom-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.025);
     }
 
-    .client-email {
-        font-size: 0.825rem;
-        color: var(--text-muted);
-    }
-
-    .actions-cell {
+    /* Client Profile Cell with Avatar */
+    .client-cell {
         display: flex;
+        align-items: center;
+        gap: 0.875rem;
+    }
+
+    .client-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #f8fafc;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #1e293b, #334155);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .avatar-min { background: linear-gradient(135deg, #0284c7, #38bdf8); color: #082f49; }
+    .avatar-may { background: linear-gradient(135deg, #7c3aed, #c084fc); color: #2e1065; }
+    .avatar-cor { background: linear-gradient(135deg, #d97706, #fbbf24); color: #451a03; }
+    .avatar-vip { background: linear-gradient(135deg, #059669, #34d399); color: #022c22; }
+
+    .client-info-main {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .client-name-link {
+        font-weight: 700;
+        color: var(--text-main);
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+
+    .client-name-link:hover {
+        color: var(--primary);
+    }
+
+    .client-sub-info {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
         gap: 0.5rem;
+        margin-top: 0.15rem;
+    }
+
+    .doc-pill {
+        background: #0f172a;
+        border: 1px solid var(--border-color);
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.825rem;
+        color: #93c5fd;
+        font-weight: 600;
+    }
+
+    /* Badges */
+    .badge-seg {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.775rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .badge-seg-min {
+        background: rgba(56, 189, 248, 0.12);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .badge-seg-may {
+        background: rgba(168, 85, 247, 0.12);
+        color: #c084fc;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .badge-seg-cor {
+        background: rgba(245, 158, 11, 0.12);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-seg-vip {
+        background: rgba(16, 185, 129, 0.12);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Status Pill with Pulsing Dot */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.3rem 0.7rem;
+        border-radius: 9999px;
+        font-size: 0.775rem;
+        font-weight: 700;
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.12);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-inactive {
+        background: rgba(148, 163, 184, 0.12);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: currentColor;
+    }
+
+    .status-active .status-dot {
+        box-shadow: 0 0 8px #34d399;
+    }
+
+    /* Action Buttons */
+    .action-group {
+        display: flex;
+        gap: 0.4rem;
         justify-content: flex-end;
     }
 
-    .btn-icon {
+    .btn-table-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
         padding: 0.4rem 0.65rem;
         font-size: 0.8rem;
-        border-radius: 0.375rem;
+        font-weight: 600;
+        border-radius: 6px;
         text-decoration: none;
-        color: var(--text-muted);
         background: #0f172a;
         border: 1px solid var(--border-color);
-        transition: all 0.2s;
+        color: var(--text-muted);
+        transition: all 0.15s ease;
     }
 
-    .btn-icon:hover {
+    .btn-table-action:hover {
         color: var(--text-main);
         border-color: var(--primary);
+        background: #1e293b;
     }
 
-    .btn-icon-danger:hover {
+    .btn-table-action-danger:hover {
         color: #f87171;
         border-color: var(--danger);
+        background: rgba(239, 68, 68, 0.1);
     }
 
-    /* Empty state */
+    /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 4.5rem 2rem;
         color: var(--text-muted);
+    }
+
+    .empty-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin: 0 auto 1.25rem auto;
     }
 
     .empty-state h3 {
-        font-size: 1.25rem;
+        font-size: 1.3rem;
+        font-weight: 700;
         color: var(--text-main);
         margin-bottom: 0.5rem;
     }
 
     /* Pagination */
-    .pagination {
+    .pagination-bar {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1rem 1.25rem;
+        padding: 1.1rem 1.5rem;
         border-top: 1px solid var(--border-color);
         background-color: #0f172a;
         font-size: 0.875rem;
         color: var(--text-muted);
+        flex-wrap: wrap;
+        gap: 1rem;
     }
 
-    .pagination-controls {
+    .pagination-nav {
         display: flex;
         gap: 0.5rem;
     }
@@ -203,37 +468,89 @@
 {% endblock %}
 
 {% block content %}
+<!-- Page Header -->
 <div class="page-header">
     <div class="page-title-group">
-        <h1>Directorio de Clientes</h1>
-        <p>Administra la cartera de clientes, segmentaciones y datos de contacto.</p>
+        <h1>
+            <span>👥</span> Directorio de Clientes
+        </h1>
+        <p>Gestión integral de cartera, segmentación comercial y datos de contacto de clientes.</p>
     </div>
     <div>
         <a href="{% url 'customers:cliente-create' %}" class="btn btn-primary">
-            + Nuevo Cliente
+            + Registrar Nuevo Cliente
         </a>
     </div>
 </div>
 
-<!-- Stats Overview -->
+<!-- KPI Stats Overview -->
 <div class="stats-grid">
-    <div class="stat-card">
-        <span class="stat-label">Total Clientes</span>
-        <span class="stat-value">{{ total_count }}</span>
+    <div class="stat-card accent-total">
+        <div class="stat-header">
+            <span class="stat-label">Total Clientes</span>
+            <span class="stat-icon">📊</span>
+        </div>
+        <div class="stat-value">{{ total_count|default:0 }}</div>
     </div>
-    <div class="stat-card">
-        <span class="stat-label">Activos</span>
-        <span class="stat-value" style="color: #34d399;">{{ active_count }}</span>
+    <div class="stat-card accent-active">
+        <div class="stat-header">
+            <span class="stat-label">Clientes Activos</span>
+            <span class="stat-icon">⚡</span>
+        </div>
+        <div class="stat-value" style="color: #34d399;">{{ active_count|default:0 }}</div>
     </div>
-    <div class="stat-card">
-        <span class="stat-label">Resultados Filtrados</span>
-        <span class="stat-value" style="color: #38bdf8;">{{ page_obj.paginator.count|default:clientes|length }}</span>
+    <div class="stat-card accent-min">
+        <div class="stat-header">
+            <span class="stat-label">Minoristas</span>
+            <span class="stat-icon">🛒</span>
+        </div>
+        <div class="stat-value" style="color: #38bdf8;">{{ count_min|default:0 }}</div>
+    </div>
+    <div class="stat-card accent-may">
+        <div class="stat-header">
+            <span class="stat-label">Mayoristas</span>
+            <span class="stat-icon">📦</span>
+        </div>
+        <div class="stat-value" style="color: #c084fc;">{{ count_may|default:0 }}</div>
+    </div>
+    <div class="stat-card accent-cor">
+        <div class="stat-header">
+            <span class="stat-label">Corporativos</span>
+            <span class="stat-icon">🏢</span>
+        </div>
+        <div class="stat-value" style="color: #fbbf24;">{{ count_cor|default:0 }}</div>
+    </div>
+    <div class="stat-card accent-vip">
+        <div class="stat-header">
+            <span class="stat-label">VIP</span>
+            <span class="stat-icon">⭐</span>
+        </div>
+        <div class="stat-value" style="color: #34d399;">{{ count_vip|default:0 }}</div>
     </div>
 </div>
 
-<!-- Filters Bar -->
+<!-- Segment Filter Tabs -->
+<div class="segment-tabs">
+    <a href="{% url 'customers:cliente-list' %}{% if current_q %}?q={{ current_q }}{% endif %}" class="segment-tab {% if not current_segment %}active{% endif %}">
+        Todos <span class="segment-tab-count">{{ total_count|default:0 }}</span>
+    </a>
+    <a href="?segmentacion=MIN{% if current_q %}&q={{ current_q }}{% endif %}" class="segment-tab {% if current_segment == 'MIN' %}active{% endif %}">
+        🛒 Minoristas <span class="segment-tab-count">{{ count_min|default:0 }}</span>
+    </a>
+    <a href="?segmentacion=MAY{% if current_q %}&q={{ current_q }}{% endif %}" class="segment-tab {% if current_segment == 'MAY' %}active{% endif %}">
+        📦 Mayoristas <span class="segment-tab-count">{{ count_may|default:0 }}</span>
+    </a>
+    <a href="?segmentacion=COR{% if current_q %}&q={{ current_q }}{% endif %}" class="segment-tab {% if current_segment == 'COR' %}active{% endif %}">
+        🏢 Corporativos <span class="segment-tab-count">{{ count_cor|default:0 }}</span>
+    </a>
+    <a href="?segmentacion=VIP{% if current_q %}&q={{ current_q }}{% endif %}" class="segment-tab {% if current_segment == 'VIP' %}active{% endif %}">
+        ⭐ VIP <span class="segment-tab-count">{{ count_vip|default:0 }}</span>
+    </a>
+</div>
+
+<!-- Filter Toolbar -->
 <div class="filter-bar">
-    <form method="get" class="filter-form">
+    <form method="get" class="filter-form" id="clienteFilterForm">
         <div>
             <label class="form-label" for="id_q">Búsqueda General</label>
             {{ filter_form.q }}
@@ -252,77 +569,106 @@
         </div>
         <div class="filter-actions">
             <button type="submit" class="btn btn-primary">Filtrar</button>
-            <a href="{% url 'customers:cliente-list' %}" class="btn btn-secondary" title="Limpiar filtros">Limpiar</a>
+            <a href="{% url 'customers:cliente-list' %}" class="btn btn-secondary" title="Restablecer todos los filtros">Limpiar</a>
         </div>
     </form>
 </div>
 
-<!-- Table / List of Clientes -->
-<div class="table-container">
+<!-- Main Table Container -->
+<div class="table-card">
     {% if clientes %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Cliente / Correo</th>
-                    <th>Documento / RUC</th>
-                    <th>Teléfono</th>
-                    <th>Segmento</th>
-                    <th>Estado</th>
-                    <th style="text-align: right;">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cliente in clientes %}
+        <div class="table-responsive">
+            <table class="custom-table" id="clientesTable">
+                <thead>
                     <tr>
-                        <td>
-                            <a href="{% url 'customers:cliente-detail' cliente.pk %}" class="client-name" style="text-decoration: none;">
-                                {{ cliente.nombre }}
-                            </a>
-                            <span class="client-email">{{ cliente.correo }}</span>
-                        </td>
-                        <td>
-                            <code style="background: #0f172a; padding: 0.2rem 0.4rem; border-radius: 4px; color: #93c5fd;">{{ cliente.documento_ruc }}</code>
-                        </td>
-                        <td>{{ cliente.telefono|default:'-' }}</td>
-                        <td>
-                            {% if cliente.segmentacion == 'MIN' %}
-                                <span class="badge badge-min">Minorista</span>
-                            {% elif cliente.segmentacion == 'MAY' %}
-                                <span class="badge badge-may">Mayorista</span>
-                            {% elif cliente.segmentacion == 'COR' %}
-                                <span class="badge badge-cor">Corporativo</span>
-                            {% elif cliente.segmentacion == 'VIP' %}
-                                <span class="badge badge-vip">VIP</span>
-                            {% else %}
-                                <span class="badge">{{ cliente.get_segmentacion_display }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if cliente.is_active %}
-                                <span class="badge badge-active">Activo</span>
-                            {% else %}
-                                <span class="badge badge-inactive">Inactivo</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="actions-cell">
-                                <a href="{% url 'customers:cliente-detail' cliente.pk %}" class="btn-icon" title="Ver Detalles">Ver</a>
-                                <a href="{% url 'customers:cliente-update' cliente.pk %}" class="btn-icon" title="Editar">Editar</a>
-                                <a href="{% url 'customers:cliente-delete' cliente.pk %}" class="btn-icon btn-icon-danger" title="Eliminar">Eliminar</a>
-                            </div>
-                        </td>
+                        <th>Cliente / Razón Social</th>
+                        <th>Documento / RUC</th>
+                        <th>Contacto</th>
+                        <th>Segmento</th>
+                        <th>Estado</th>
+                        <th style="text-align: right;">Acciones</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                        <tr data-client-row>
+                            <td>
+                                <div class="client-cell">
+                                    <div class="client-avatar avatar-{{ cliente.segmentacion|lower }}">
+                                        {{ cliente.nombre|slice:":2"|upper }}
+                                    </div>
+                                    <div class="client-info-main">
+                                        <a href="{% url 'customers:cliente-detail' cliente.pk %}" class="client-name-link">
+                                            {{ cliente.nombre }}
+                                        </a>
+                                        <span class="client-sub-info">
+                                            <span>✉️ {{ cliente.correo }}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="doc-pill">{{ cliente.documento_ruc }}</span>
+                            </td>
+                            <td>
+                                {% if cliente.telefono %}
+                                    <a href="tel:{{ cliente.telefono }}" style="color: var(--text-main); text-decoration: none; font-size: 0.875rem;">
+                                        📞 {{ cliente.telefono }}
+                                    </a>
+                                {% else %}
+                                    <span style="color: var(--text-subtle); font-size: 0.85rem;">- Sin teléfono -</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cliente.segmentacion == 'MIN' %}
+                                    <span class="badge-seg badge-seg-min">🛒 Minorista</span>
+                                {% elif cliente.segmentacion == 'MAY' %}
+                                    <span class="badge-seg badge-seg-may">📦 Mayorista</span>
+                                {% elif cliente.segmentacion == 'COR' %}
+                                    <span class="badge-seg badge-seg-cor">🏢 Corporativo</span>
+                                {% elif cliente.segmentacion == 'VIP' %}
+                                    <span class="badge-seg badge-seg-vip">⭐ VIP</span>
+                                {% else %}
+                                    <span class="badge">{{ cliente.get_segmentacion_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cliente.is_active %}
+                                    <span class="status-pill status-active">
+                                        <span class="status-dot"></span> Activo
+                                    </span>
+                                {% else %}
+                                    <span class="status-pill status-inactive">
+                                        <span class="status-dot"></span> Inactivo
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-group">
+                                    <a href="{% url 'customers:cliente-detail' cliente.pk %}" class="btn-table-action" title="Ver Ficha Detallada">
+                                        👁️ Ver
+                                    </a>
+                                    <a href="{% url 'customers:cliente-update' cliente.pk %}" class="btn-table-action" title="Editar Ficha">
+                                        ✏️ Editar
+                                    </a>
+                                    <a href="{% url 'customers:cliente-delete' cliente.pk %}" class="btn-table-action btn-table-action-danger" title="Eliminar Cliente">
+                                        🗑️
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-        <!-- Pagination -->
+        <!-- Pagination Controls -->
         {% if is_paginated %}
-            <div class="pagination">
+            <div class="pagination-bar">
                 <div>
-                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} clientes en total)
+                    Mostrando página <strong>{{ page_obj.number }}</strong> de <strong>{{ page_obj.paginator.num_pages }}</strong> ({{ page_obj.paginator.count }} registros en total)
                 </div>
-                <div class="pagination-controls">
+                <div class="pagination-nav">
                     {% if page_obj.has_previous %}
                         <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="btn btn-sm btn-secondary">&laquo; Anterior</a>
                     {% endif %}
@@ -335,9 +681,11 @@
         {% endif %}
     {% else %}
         <div class="empty-state">
-            <h3>No se encontraron clientes</h3>
-            <p>Intenta ajustar tus criterios de búsqueda o filtros de segmento.</p>
-            <div style="margin-top: 1.5rem;">
+            <div class="empty-icon">🔍</div>
+            <h3>No se encontraron clientes coincidentes</h3>
+            <p>Prueba ajustando los términos de búsqueda o limpiando los filtros seleccionados.</p>
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem; justify-content: center;">
+                <a href="{% url 'customers:cliente-list' %}" class="btn btn-secondary">Limpiar Filtros</a>
                 <a href="{% url 'customers:cliente-create' %}" class="btn btn-primary">+ Registrar Primer Cliente</a>
             </div>
         </div>
