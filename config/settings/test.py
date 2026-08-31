@@ -1,7 +1,7 @@
 import os
 from .base import *
 
-DEBUG = False
+DEBUG = True
 SECRET_KEY = 'test-key-for-running-tests-only'
 
 DATABASES = {
