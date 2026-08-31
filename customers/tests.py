@@ -606,3 +606,229 @@ class ClienteKeycloakVinculationTests(TestCase):
         cliente_existente.refresh_from_db()
         self.assertEqual(cliente_existente.usuario, login_user)
 
+
+class ClienteModelValidationTests(TestCase):
+    """
+    Suite de pruebas unitarias para las validaciones de campo del modelo
+    :class:`~customers.models.Cliente`.
+
+    Verifica restricciones de longitud máxima, formato de correo electrónico,
+    validez del catálogo de segmentación y auto-poblado de timestamps.
+    """
+
+    def test_segmentacion_choices_valid(self):
+        """Verifica que todos los valores del catálogo de segmentación (MIN, MAY, COR, VIP) sean aceptados."""
+        for code, _ in Cliente.Segmentacion.choices:
+            cliente = Cliente(
+                nombre=f'Cliente {code}',
+                documento_ruc=f'DOC-{code}',
+                correo=f'{code.lower()}@test.com',
+                segmentacion=code,
+            )
+            try:
+                cliente.full_clean()
+            except Exception as exc:
+                self.fail(
+                    f'full_clean() rechazó segmentacion={code!r} inesperadamente: {exc}'
+                )
+
+    def test_segmentacion_invalid_value(self):
+        """Verifica que un valor fuera del catálogo de segmentación genere un ValidationError."""
+        from django.core.exceptions import ValidationError
+
+        cliente = Cliente(
+            nombre='Cliente Malo',
+            documento_ruc='BAD-SEG',
+            correo='bad@test.com',
+            segmentacion='XXX',
+        )
+        with self.assertRaises(ValidationError):
+            cliente.full_clean()
+
+    def test_correo_field_validates_format(self):
+        """Verifica que un correo electrónico mal formado sea rechazado por full_clean()."""
+        from django.core.exceptions import ValidationError
+
+        cliente = Cliente(
+            nombre='Email Invalido',
+            documento_ruc='BADRUC-1',
+            correo='esto_no_es_un_correo',
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            cliente.full_clean()
+        self.assertIn('correo', ctx.exception.message_dict)
+
+    def test_documento_ruc_max_length(self):
+        """Verifica que un documento/RUC de más de 20 caracteres sea rechazado por full_clean()."""
+        from django.core.exceptions import ValidationError
+
+        cliente = Cliente(
+            nombre='RUC Largo',
+            documento_ruc='A' * 21,
+            correo='ruc_largo@test.com',
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            cliente.full_clean()
+        self.assertIn('documento_ruc', ctx.exception.message_dict)
+
+    def test_nombre_max_length(self):
+        """Verifica que un nombre de más de 150 caracteres sea rechazado por full_clean()."""
+        from django.core.exceptions import ValidationError
+
+        cliente = Cliente(
+            nombre='N' * 151,
+            documento_ruc='LONG-NAME-RUC',
+            correo='longname@test.com',
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            cliente.full_clean()
+        self.assertIn('nombre', ctx.exception.message_dict)
+
+    def test_timestamps_auto_populated(self):
+        """Verifica que created_at y updated_at se rellenen automáticamente al crear el registro."""
+        cliente = Cliente.objects.create(
+            nombre='Timestamps Test',
+            documento_ruc='TS-001',
+            correo='timestamps@test.com',
+        )
+        self.assertIsNotNone(cliente.created_at)
+        self.assertIsNotNone(cliente.updated_at)
+        self.assertEqual(cliente.created_at.date(), cliente.updated_at.date())
+
+
+class ClienteSegmentacionContextTests(TestCase):
+    """
+    Suite de pruebas de integración para el contexto enriquecido de
+    :class:`~customers.views.ClienteListView`.
+
+    Valida la presencia de conteos KPI por segmento, el estado de filtros activos
+    y el comportamiento de la paginación cuando el número de registros supera el límite.
+    """
+
+    def setUp(self):
+        """Crea un usuario autenticado y un conjunto diverso de clientes de prueba."""
+        self.user = User.objects.create_user(
+            username='ctx_tester',
+            email='ctx@globalexchange.com',
+            password='Password123!',
+        )
+        self.client_auth = Client()
+        self.client_auth.force_login(self.user)
+
+        for i in range(2):
+            Cliente.objects.create(
+                nombre=f'Minorista {i}',
+                documento_ruc=f'MIN-{i}',
+                correo=f'min{i}@test.com',
+                segmentacion=Cliente.Segmentacion.MINORISTA,
+            )
+            Cliente.objects.create(
+                nombre=f'Mayorista {i}',
+                documento_ruc=f'MAY-{i}',
+                correo=f'may{i}@test.com',
+                segmentacion=Cliente.Segmentacion.MAYORISTA,
+            )
+            Cliente.objects.create(
+                nombre=f'Corporativo {i}',
+                documento_ruc=f'COR-{i}',
+                correo=f'cor{i}@test.com',
+                segmentacion=Cliente.Segmentacion.CORPORATIVO,
+            )
+            Cliente.objects.create(
+                nombre=f'VIP {i}',
+                documento_ruc=f'VIP-{i}',
+                correo=f'vip{i}@test.com',
+                segmentacion=Cliente.Segmentacion.VIP,
+            )
+
+    def test_list_context_contains_kpi_counts(self):
+        """Verifica que el contexto de ClienteListView incluya los conteos KPI por segmento."""
+        response = self.client_auth.get(reverse('customers:cliente-list'))
+        self.assertEqual(response.status_code, 200)
+
+        # Accedemos directamente con la clave (response.context soporta lookup en todas las capas)
+        self.assertGreaterEqual(response.context['count_min'], 2)
+        self.assertGreaterEqual(response.context['count_may'], 2)
+        self.assertGreaterEqual(response.context['count_cor'], 2)
+        self.assertGreaterEqual(response.context['count_vip'], 2)
+        self.assertGreaterEqual(response.context['total_count'], 8)
+        self.assertIn('active_count', response.context)
+        self.assertIn('inactive_count', response.context)
+
+    def test_list_context_filter_state_preserved(self):
+        """Verifica que los valores de filtro activos se reflejen en el contexto."""
+        response = self.client_auth.get(
+            reverse('customers:cliente-list'),
+            {'segmentacion': 'VIP', 'q': 'vip'},
+        )
+        self.assertEqual(response.status_code, 200)
+        # Los valores de filtro activos deben estar en el contexto de la vista
+        self.assertEqual(response.context['current_segment'], 'VIP')
+        self.assertEqual(response.context['current_q'], 'vip')
+
+    def test_pagination_context(self):
+        """Verifica que con más de 10 clientes la paginación se active y is_paginated sea True."""
+        for i in range(3):
+            Cliente.objects.create(
+                nombre=f'Extra {i}',
+                documento_ruc=f'EXTRA-{i}',
+                correo=f'extra{i}@test.com',
+            )
+        response = self.client_auth.get(reverse('customers:cliente-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['is_paginated'])
+        self.assertLessEqual(len(response.context['clientes']), 10)
+
+
+class ClienteFormValidationTests(TestCase):
+    """
+    Suite de pruebas unitarias para :class:`~customers.forms.ClienteForm`
+    y :class:`~customers.forms.ClienteFilterForm`.
+
+    Verifica la aceptación de datos válidos, el rechazo de datos mal formados
+    y la validez del formulario de filtros cuando está vacío.
+    """
+
+    def test_form_valid_data(self):
+        """Verifica que ClienteForm acepte un conjunto de datos completos y válidos."""
+        from customers.forms import ClienteForm
+
+        form = ClienteForm(data={
+            'nombre': 'Empresa Válida S.A.',
+            'documento_ruc': '80080080-0',
+            'correo': 'valida@empresa.com',
+            'telefono': '+595 21 123456',
+            'segmentacion': 'COR',
+            'is_active': True,
+        })
+        self.assertTrue(form.is_valid(), msg=f'Errores inesperados: {form.errors}')
+
+    def test_form_invalid_correo(self):
+        """Verifica que ClienteForm rechace un correo electrónico mal formado."""
+        from customers.forms import ClienteForm
+
+        form = ClienteForm(data={
+            'nombre': 'Empresa Sin Correo',
+            'documento_ruc': '99099099-9',
+            'correo': 'esto_no_es_email',
+            'segmentacion': 'MIN',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('correo', form.errors)
+
+    def test_form_missing_required_fields(self):
+        """Verifica que ClienteForm requiera nombre, documento_ruc y correo."""
+        from customers.forms import ClienteForm
+
+        form = ClienteForm(data={})
+        self.assertFalse(form.is_valid())
+        self.assertIn('nombre', form.errors)
+        self.assertIn('documento_ruc', form.errors)
+        self.assertIn('correo', form.errors)
+
+    def test_filter_form_empty_is_valid(self):
+        """Verifica que ClienteFilterForm vacío sea siempre válido (todos sus campos son opcionales)."""
+        from customers.forms import ClienteFilterForm
+
+        form = ClienteFilterForm(data={})
+        self.assertTrue(form.is_valid(), msg=f'Errores inesperados: {form.errors}')

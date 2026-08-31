@@ -303,3 +303,135 @@ class KeycloakBackendVinculationTests(TestCase):
         self.assertIsNotNone(cliente)
         self.assertEqual(cliente.usuario, user)
 
+
+class AuthLoginRedirectTests(TestCase):
+    """
+    Suite de pruebas para verificar que las rutas protegidas redirijan correctamente
+    a OIDC cuando el usuario no está autenticado, y sean accesibles con sesión activa.
+    """
+
+    def setUp(self):
+        """Crea un usuario autenticado para pruebas de acceso."""
+        self.group_operator, _ = Group.objects.get_or_create(name='operator')
+
+        self.auth_user = User.objects.create_user(
+            username='redirect_tester',
+            email='redirect@globalexchange.com',
+            password='Password123!',
+            is_staff=True,
+        )
+        self.auth_user.groups.add(self.group_operator)
+
+        self.client_auth = Client()
+        self.client_auth.force_login(self.auth_user)
+
+    def test_unauthenticated_customer_list_redirects(self):
+        """Verifica que /customers/ redirija a OIDC cuando el usuario no está autenticado."""
+        anon = Client()
+        response = anon.get(reverse('customers:cliente-list'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/oidc/', response.url)
+
+    def test_unauthenticated_customer_detail_redirects(self):
+        """Verifica que /customers/<pk>/ redirija a OIDC cuando el usuario no está autenticado."""
+        from customers.models import Cliente
+        cliente = Cliente.objects.create(
+            nombre='Cliente Redirect Test',
+            documento_ruc='REDIRECT-001',
+            correo='redirect.test@test.com',
+        )
+        anon = Client()
+        response = anon.get(reverse('customers:cliente-detail', kwargs={'pk': cliente.pk}))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/oidc/', response.url)
+
+    def test_authenticated_accesses_home(self):
+        """Verifica que un usuario autenticado acceda a home con HTTP 200."""
+        response = self.client_auth.get(reverse('home'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_authenticated_accesses_customer_list(self):
+        """Verifica que un operador autenticado acceda al listado de clientes con HTTP 200."""
+        response = self.client_auth.get(reverse('customers:cliente-list'))
+        self.assertEqual(response.status_code, 200)
+
+
+class AuthRoleInheritanceTests(TestCase):
+    """
+    Suite de pruebas para validar la herencia de privilegios por rol y las
+    restricciones de acceso basadas en grupos de usuarios (RBAC).
+    """
+
+    def setUp(self):
+        """Configura usuarios con distintos perfiles de rol."""
+        self.group_admin, _ = Group.objects.get_or_create(name='admin')
+        self.group_operator, _ = Group.objects.get_or_create(name='operator')
+        self.group_user, _ = Group.objects.get_or_create(name='user')
+
+        self.admin_user = User.objects.create_superuser(
+            username='admin_rbac',
+            email='admin_rbac@globalexchange.com',
+            password='AdminPass123!',
+        )
+        self.client_admin = Client()
+        self.client_admin.force_login(self.admin_user)
+
+        self.op_user = User.objects.create_user(
+            username='op_rbac',
+            email='op_rbac@globalexchange.com',
+            password='OpPass123!',
+            is_staff=True,
+        )
+        self.op_user.groups.add(self.group_operator)
+        self.client_operator = Client()
+        self.client_operator.force_login(self.op_user)
+
+        self.std_user = User.objects.create_user(
+            username='std_rbac',
+            email='std_rbac@globalexchange.com',
+            password='UserPass123!',
+        )
+        self.std_user.groups.add(self.group_user)
+        self.client_user = Client()
+        self.client_user.force_login(self.std_user)
+
+    def test_admin_inherits_operator_privileges(self):
+        """Verifica que el admin pueda acceder a las rutas del operador (clientes)."""
+        response = self.client_admin.get(reverse('customers:cliente-list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_can_access_django_admin_panel(self):
+        """Verifica que el superusuario (admin) pueda acceder al panel de administración de Django."""
+        response = self.client_admin.get(reverse('admin:index'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_standard_user_cannot_access_admin_panel(self):
+        """Verifica que un usuario estándar (sin is_staff) sea redirigido al intentar acceder al panel de administración."""
+        response = self.client_user.get(reverse('admin:index'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/login/', response.url)
+
+    def test_admin_role_flags_are_correct(self):
+        """Verifica que las banderas de rol del contexto sean correctas para cada tipo de usuario."""
+        from authentication.context_processors import auth_roles
+        from django.test import RequestFactory
+
+        factory = RequestFactory()
+        req_admin = factory.get('/')
+        req_admin.user = self.admin_user
+        ctx_admin = auth_roles(req_admin)
+        self.assertTrue(ctx_admin['is_admin'])
+        self.assertTrue(ctx_admin['is_operator'])
+
+        req_op = factory.get('/')
+        req_op.user = self.op_user
+        ctx_op = auth_roles(req_op)
+        self.assertFalse(ctx_op['is_admin'])
+        self.assertTrue(ctx_op['is_operator'])
+
+        req_std = factory.get('/')
+        req_std.user = self.std_user
+        ctx_std = auth_roles(req_std)
+        self.assertFalse(ctx_std['is_admin'])
+        self.assertFalse(ctx_std['is_operator'])
+        self.assertTrue(ctx_std['is_user_role'])

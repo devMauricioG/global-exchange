@@ -67,3 +67,15 @@ consigna. Cada integrante agrega su propia entrada al usar una IA.
   (`manage.py test`) antes de publicar los cambios.
 
 ---
+
+## Pablo Elizeche — 31/08/2026 — Antigravity / Claude & Gemini
+
+**Contexto:** Sprint 1 — Redacción e integración de Pruebas Unitarias (PyUnit) para el CRUD de Clientes y autenticación (SCRUM-30)
+
+**Resumen:**
+- Planifiqué y diseñé la estrategia de pruebas unitarias y de integración para alcanzar cobertura completa sobre el ciclo de vida del modelo `Cliente`, reglas de validación de campos, formularios Django y control de acceso basado en roles (RBAC).
+- Redacté las suites de prueba `ClienteModelValidationTests`, `ClienteSegmentacionContextTests` y `ClienteFormValidationTests` en `customers/tests.py`, verificando validaciones estrictas de formato, unicidad, límites de caracteres y preservación de estados de filtro. Usé la IA para contrastar casos límite y asegurar que no quedaran reglas de validación sin cubrir.
+- Implementé las suites `AuthLoginRedirectTests` y `AuthRoleInheritanceTests` en `authentication/tests.py` para asegurar que las rutas protegidas redirijan correctamente hacia OIDC y que los privilegios de navegación y administración se hereden y apliquen de forma estricta según el rol asignado.
+- Ejecuté y depuré las pruebas unitarias automáticas con el runner de pruebas de Django (`manage.py test --settings=config.settings.test`), resolviendo aserciones y asegurando un 100% de aprobación antes de publicar los cambios.
+
+---
