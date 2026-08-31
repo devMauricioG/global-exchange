@@ -108,3 +108,4 @@ class Cliente(models.Model):
         :rtype: str
         """
         return f'{self.nombre} ({self.get_segmentacion_display()})'
+
