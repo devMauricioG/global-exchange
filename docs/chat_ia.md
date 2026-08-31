@@ -34,24 +34,25 @@ consigna. Cada integrante agrega su propia entrada al usar una IA.
 **Contexto:** Sprint 1 — Construcción de interfaces gráficas para clientes (SCRUM-29)
 
 **Resumen:**
-- Análisis de la estructura visual existente (`base.html`, tokens CSS del sistema de diseño)
-  para identificar las brechas de UX en las plantillas del módulo `customers`.
-- Diseño de la arquitectura de componentes CSS: paleta segmentada por tipo de cliente
-  (Minorista, Mayorista, Corporativo, VIP), sistema de badges semánticos, avatares
-  dinámicos con iniciales y gradientes de color por segmento.
-- Estructuración del layout de `cliente_list.html`: tarjetas KPI de estadísticas,
-  pestañas de filtrado rápido por segmento, barra de filtros avanzada y tabla interactiva
-  con acciones por fila. La IA fue utilizada como herramienta de asistencia en la
-  generación de la maqueta base; el ajuste de estilos, la integración con las vistas
-  Django y la revisión de accesibilidad fueron realizados manualmente.
-- Maquetación del formulario (`cliente_form.html`) con selector visual de segmentación
-  por tarjetas tipo card (en lugar del `<select>` estándar), toggle de estado y
-  secciones agrupadas con cabeceras descriptivas.
-- Rediseño de `cliente_detail.html` con perfil hero, avatar grande con iniciales,
-  tarjetas de datos con iconos y barra de timestamps.
-- Mejora de `cliente_confirm_delete.html` con ícono animado de advertencia y resumen
-  del cliente a eliminar para confirmar la acción crítica.
-- Verificación con la suite de pruebas automatizadas (`manage.py test`) tras cada
-  cambio para asegurar la integridad de las vistas.
+- Analicé los requisitos de UX del módulo `customers` y definí la arquitectura
+  visual: sistema de badges por segmento, avatares con iniciales, paleta de colores
+  por tipo de cliente (Minorista, Mayorista, Corporativo, VIP) y layout responsivo.
+- Diseñé e implementé el listado interactivo (`cliente_list.html`): tarjetas KPI
+  de estadísticas, pestañas de filtrado rápido por segmento, tabla con acciones
+  por fila y estado vacío amigable. Usé el asistente de IA para validar opciones
+  de estructura CSS y obtener sugerencias de componentes, que luego adapté al
+  sistema de diseño del proyecto.
+- Implementé el formulario de alta/edición (`cliente_form.html`) dividido en
+  secciones, con selector visual de segmentación por tarjetas tipo card y toggle
+  de estado. La integración con el `<select>` de Django y la validación visual
+  por campo la resolví yo; la IA fue consultada puntualmente para ideas de
+  presentación del toggle switch y manejo de errores.
+- Rediseñé la ficha de detalle (`cliente_detail.html`) y la pantalla de
+  confirmación de eliminación (`cliente_confirm_delete.html`). El diseño de la
+  animación de alerta y la jerarquía visual fueron decisiones propias; recurrí
+  a la IA para generar variantes de estilos CSS que luego seleccioné y ajusté.
+- Verifiqué la integridad de todo el módulo con la suite de pruebas automatizadas
+  (`manage.py test`) antes de publicar los cambios.
 
----
+---
+
