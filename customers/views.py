@@ -47,6 +47,8 @@ def _serialize_cliente(cliente: Cliente) -> Dict[str, Any]:
         'documento_ruc': cliente.documento_ruc,
         'correo': cliente.correo,
         'telefono': cliente.telefono,
+        'keycloak_id': cliente.keycloak_id,
+        'usuario_id': cliente.usuario_id,
         'segmentacion': cliente.segmentacion,
         'segmentacion_display': cliente.get_segmentacion_display(),
         'is_active': cliente.is_active,

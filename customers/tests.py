@@ -471,3 +471,138 @@ class ClienteAPIEndpointsTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Cliente.objects.filter(pk=pk).exists())
+
+
+class ClienteKeycloakVinculationTests(TestCase):
+    """
+    Suite de pruebas para la lógica de vinculación automática de identidades Keycloak (claim sub).
+    """
+
+    def setUp(self):
+        """Inicializa usuarios y fichas de prueba."""
+        self.user = User.objects.create_user(
+            username='carlos_kc',
+            email='carlos.keycloak@globalexchange.com',
+            first_name='Carlos',
+            last_name='Keycloak',
+            password='Password123!',
+        )
+        self.sub_uuid = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+
+    def test_vincular_cliente_por_sub_existente(self):
+        """Verifica que si ya existe un cliente con el sub registrado, se asocie con el usuario."""
+        cliente_previo = Cliente.objects.create(
+            nombre='Carlos Previo',
+            documento_ruc='99999-1',
+            correo='carlos.previo@test.com',
+            keycloak_id=self.sub_uuid,
+        )
+        from customers.services import vincular_cliente_keycloak
+
+        cliente = vincular_cliente_keycloak(
+            user=self.user,
+            keycloak_id=self.sub_uuid,
+            email='carlos.keycloak@globalexchange.com',
+        )
+
+        self.assertIsNotNone(cliente)
+        self.assertEqual(cliente.pk, cliente_previo.pk)
+        self.assertEqual(cliente.keycloak_id, self.sub_uuid)
+        self.assertEqual(cliente.usuario, self.user)
+
+    def test_vincular_cliente_por_correo_existente(self):
+        """Verifica que una ficha existente creada por un admin se vincule automáticamente por email."""
+        cliente_admin = Cliente.objects.create(
+            nombre='Carlos Registrado Previamente',
+            documento_ruc='88888-2',
+            correo='carlos.keycloak@globalexchange.com',
+            keycloak_id=None,
+            usuario=None,
+        )
+        from customers.services import vincular_cliente_keycloak
+
+        cliente = vincular_cliente_keycloak(
+            user=self.user,
+            keycloak_id=self.sub_uuid,
+            email='carlos.keycloak@globalexchange.com',
+        )
+
+        self.assertIsNotNone(cliente)
+        self.assertEqual(cliente.pk, cliente_admin.pk)
+        self.assertEqual(cliente.keycloak_id, self.sub_uuid)
+        self.assertEqual(cliente.usuario, self.user)
+
+    def test_crear_y_vincular_cliente_automatico(self):
+        """Verifica que se cree una nueva ficha de cliente automáticamente si no existía previamente."""
+        from customers.services import vincular_cliente_keycloak
+
+        nuevo_user = User.objects.create_user(
+            username='nuevo_cliente',
+            email='nuevo.cliente@globalexchange.com',
+            first_name='Ana',
+            last_name='Gómez',
+        )
+        nuevo_sub = 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d'
+        claims = {
+            'sub': nuevo_sub,
+            'email': 'nuevo.cliente@globalexchange.com',
+            'given_name': 'Ana',
+            'family_name': 'Gómez',
+            'preferred_username': 'nuevo_cliente',
+        }
+
+        cliente = vincular_cliente_keycloak(
+            user=nuevo_user,
+            keycloak_id=nuevo_sub,
+            claims=claims,
+        )
+
+        self.assertIsNotNone(cliente)
+        self.assertEqual(cliente.nombre, 'Ana Gómez')
+        self.assertEqual(cliente.correo, 'nuevo.cliente@globalexchange.com')
+        self.assertEqual(cliente.keycloak_id, nuevo_sub)
+        self.assertEqual(cliente.usuario, nuevo_user)
+        self.assertTrue(cliente.is_active)
+
+    def test_signal_keycloak_user_authenticated_dispatched(self):
+        """Verifica que al emitir la señal keycloak_user_authenticated se ejecute la vinculación."""
+        from customers.signals import keycloak_user_authenticated
+
+        signal_sub = 'signal-sub-uuid-1234'
+        keycloak_user_authenticated.send(
+            sender=self.__class__,
+            user=self.user,
+            keycloak_id=signal_sub,
+            claims={'sub': signal_sub, 'email': self.user.email},
+        )
+
+        cliente = Cliente.objects.filter(keycloak_id=signal_sub).first()
+        self.assertIsNotNone(cliente)
+        self.assertEqual(cliente.usuario, self.user)
+
+    def test_signal_user_logged_in_triggers_vinculation(self):
+        """Verifica que la señal nativa user_logged_in sincronice la ficha existente."""
+        from django.contrib.auth.signals import user_logged_in
+        from django.test import RequestFactory
+
+        cliente_existente = Cliente.objects.create(
+            nombre='Usuario Logeado',
+            documento_ruc='77777-3',
+            correo='login.test@globalexchange.com',
+        )
+        login_user = User.objects.create_user(
+            username='login_user',
+            email='login.test@globalexchange.com',
+        )
+        factory = RequestFactory()
+        request = factory.get('/')
+
+        user_logged_in.send(
+            sender=login_user.__class__,
+            request=request,
+            user=login_user,
+        )
+
+        cliente_existente.refresh_from_db()
+        self.assertEqual(cliente_existente.usuario, login_user)
+

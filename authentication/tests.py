@@ -240,3 +240,66 @@ class DynamicNavbarRenderingTests(TestCase):
         response = client.get(reverse('home'))
         self.assertEqual(response.status_code, 302)
         self.assertIn('/oidc/authenticate/', response.url)
+
+
+class KeycloakBackendVinculationTests(TestCase):
+    """
+    Suite de pruebas para validar la vinculación de Cliente desde el backend OIDC.
+    """
+
+    def setUp(self):
+        """Inicializa el backend de autenticación."""
+        from authentication.backends import KeycloakOIDCAuthenticationBackend
+        self.backend = KeycloakOIDCAuthenticationBackend()
+
+    def test_create_user_links_cliente(self):
+        """Verifica que al invocar create_user con claims OIDC se cree y vincule el Cliente."""
+        from customers.models import Cliente
+
+        claims = {
+            'sub': 'oidc-backend-sub-001',
+            'email': 'oidc.user@globalexchange.com',
+            'preferred_username': 'oidc_user',
+            'given_name': 'Juan',
+            'family_name': 'OIDC',
+            'realm_roles': ['user'],
+        }
+
+        user = self.backend.create_user(claims)
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, 'oidc_user')
+
+        cliente = Cliente.objects.filter(keycloak_id='oidc-backend-sub-001').first()
+        self.assertIsNotNone(cliente)
+        self.assertEqual(cliente.usuario, user)
+        self.assertEqual(cliente.correo, 'oidc.user@globalexchange.com')
+        self.assertEqual(cliente.nombre, 'Juan OIDC')
+
+    def test_update_user_syncs_cliente(self):
+        """Verifica que al actualizar usuario con update_user se sincronice la vinculación de Cliente."""
+        from customers.models import Cliente
+
+        claims_initial = {
+            'sub': 'oidc-backend-sub-002',
+            'email': 'update.user@globalexchange.com',
+            'preferred_username': 'update_user',
+            'given_name': 'Pedro',
+            'family_name': 'Inicial',
+            'realm_roles': ['user'],
+        }
+        user = self.backend.create_user(claims_initial)
+
+        claims_updated = {
+            'sub': 'oidc-backend-sub-002',
+            'email': 'update.user@globalexchange.com',
+            'preferred_username': 'update_user',
+            'given_name': 'Pedro',
+            'family_name': 'Actualizado',
+            'realm_roles': ['operator'],
+        }
+        self.backend.update_user(user, claims_updated)
+
+        cliente = Cliente.objects.filter(keycloak_id='oidc-backend-sub-002').first()
+        self.assertIsNotNone(cliente)
+        self.assertEqual(cliente.usuario, user)
+
